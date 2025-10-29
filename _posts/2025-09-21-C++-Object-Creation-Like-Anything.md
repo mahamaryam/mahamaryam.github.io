@@ -5,9 +5,8 @@ date: 2025-09-21
 classes: wide
 tags:
   - Reverse Engineering
-  - Sidechannels
   - Linux
-  - Writeup
+  - x86_64
 ---
 
 C++ looks pretty simple on the surface... you write a class, create an object, and move on. But under the hood, the compiler is busy stitching together memory layouts, hidden pointers, and constructor calls. In this writeup, we’ll reverse a small class, trace what really happens during construction, and map out how its objects live on the stack and heap. The code we'll be taking as an example is as follows:
