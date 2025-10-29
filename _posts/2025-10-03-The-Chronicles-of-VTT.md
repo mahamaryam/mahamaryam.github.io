@@ -44,7 +44,7 @@ Lets take a look at the VTT created for this example by IDA.
 
 ### Dissecting VTT's layout...
 It has a number of entries... Lets crack each entry. According to the VTT layout as described by Itanium ABI, 
-> _The elements of the VTT array for a class `D` are in this order:
+> The elements of the VTT array for a class `D` are in this order:
 >
 > 1- **Primary virtual pointer**: address of the primary virtual table for the complete object `D`.
 > 
@@ -54,10 +54,11 @@ It has a number of entries... Lets crack each entry. According to the VTT layout
 > 3- **Secondary virtual pointers**: for each base class `X` which (a) has virtual bases or is reachable along a virtual path from `D`, and (b) is not a non-virtual primary base, the address of the virtual table for `X-in-D` or an appropriate construction virtual table.  
 > 
 > 4- **Virtual VTTs**: For each proper virtual base class in inheritance graph preorder, construct a sub-VTT as in (2) above.  
-> **NOTE**: The virtual VTT addresses come last because they are only passed to the virtual base class constructors for the complete object._
+> **NOTE**: The virtual VTT addresses come last because they are only passed to the virtual base class constructors for the complete object.
 
 Lets see, if the VTT we got from IDA, really does conform to these rules or not. The first entry in our VTT `unk_3A18`should point to the primary virtual table of our object.
 ![diagram](/assets/images/Pasted image 20250929135309.png)
+
 and we see, it does bring us to the vtable for `D`. 
 After our first entry for the primary virtual table for the complete object, now come the Sub-VTT, which are actually construction tables. 
 
@@ -75,10 +76,14 @@ The specification says:
 
 `C1` is a direct proper base of `D` and has a virtual base (`V1`), so `C1` requires a VTT. Therefore, we see `D`'s VTT having an entry for `C1-in-D`.
 ![diagram](/assets/images/Pasted image 20250929140022.png)
+
 and it brings us right inside our `C1-in-D` construction vtable, at an offset right below our typeinfo for `C1`. So till now, we have a VTT like...
+
 ![diagram](/assets/images/Pasted image 20250930234436.png)
+
 Lets jump to the third entry (actually 2nd since we're dealing with 0 based indexing) at `0x3A98` (`off_3B20`) now which brings us inside our `C1-in-D` again...
 ![diagram](/assets/images/Pasted image 20250929141249.png)
+
 This introduces us to the **secondary vptr**.
 
 ### Meet the Secondary vptrs
@@ -98,7 +103,9 @@ Recall, that `V1` inherited from both `A1` and `A2`....
   class V1 : public A1, public A2;
 ```
 ... and `A2` is the primary base of `V1` because `A2` is a polymorphic class (has virtual functions) and is inherited non-virtually at offset 0 in `V1`'s object layout. Since `V1` places `A2` at the beginning of its memory layout, `V1`'s vptr shares the same location as `A2`'s vptr, allowing them to use the same vtable, and this is why `A2::f()` appears as the first virtual function entry in `V1`'s vtable. `A2` occupies the primary base position at offset 0, making it `V1`'s primary base class.
+
 ![diagram](/assets/images/Pasted image 20251001003617.png)
+
 Till now in the VTT, we’ve set up the primary vptr that points to `D`'s vtable at [0] and then **Sub VTT** or **construction table** for `C1-in-D`:
 - The first slot [1] points to the construction vtable for the `C1` part of `D`.
 - The second slot [2] points to the secondary vptr for `V1-in-C1-in-D`.
@@ -138,12 +145,16 @@ Now our `C1` has correct virtual base offsets for the `C1-in-D` context and it r
 
 Lets move to our next entry now.
 ![diagram](/assets/images/Pasted image 20251001022954.png)
+
 our fourth (technically third) entry at `0x3AA0` in the VTT (`off_3B58`) brings us to `C2-in-D`.
 ![diagram](/assets/images/Pasted image 20250929142050.png)
+
 We know why it's here.. Because we need to create a sub-VTT `B-in-D` for each direct non-virtual proper base class `B` of `D`. `D` inherits directly from `C1`, is a proper base, and has a virtual base `V1`, so we create `C2-in-D`. 
 ![diagram](/assets/images/Pasted image 20251001022621.png)
+
 Now at our fifth entry (technically fourth), we have `off_3B58` which brings us to...
 ![diagram](/assets/images/Pasted image 20250929173955.png)
+
 We've already seen that `off_3B58` is inside our construction table `C2-in-D`. It points at `V3::g(void)`, means `V3` is our primary base for `C2`, so `V3-in-C2` is a primary vptr (look into this). This is because we can clearly see that `C2` is sharing its virtual table with `V3`. Our entry for Sub-VTT `C2-in-D` was also at `off_3B58`, and the entry immediately after it in the main VTT is also `off_3B58`, so we can safely conclude that `V3-in-D` is our primary vptr. Also, according to the Itanium ABI, a primary class is..
 > If C has a dynamic base class, attempt to choose a primary base class B. It is the first (in direct base class order) non-virtual dynamic base class, if one exists. Otherwise, it is a nearly empty virtual base class, the first one in (preorder) inheritance graph order which is not an indirect primary base class if any exist, or just the first one if they are all indirect primaries.
 
@@ -164,14 +175,18 @@ Note that the traversal may be preorder or postorder. Unless otherwise specified
 
 Since we are supposed to do a depth first traversal from the most derived class object to base objects, so we turn our graph upside down, unlike the trees/graphs in basic data structures where we start from our root node which is usually the parent and go down to its children nodes. And all the remaining preorder depth first traversal rules are applied.
 ![diagram](/assets/images/Pasted image 20251001024747.png)
+
 The preorder traversal for this graph would be:
 ```
 D -> C1 -> V1 -> A1 -> A2 -> C2 -> V3 -> V2 -> B1 -> B2 -> C3 -> X1
 ```
 We see, that `V3` also comes before `V2` in the preorder, so now we can safely conclude that `V3` is the primary base for `C2`... So now...
-![diagram](/assets/images/Pasted image 20251001025338.png)
+![diagram](/assets/images/Pasted image 20251001025338.png){: style="display:block; margin:auto;" }
+
 Lets jump to our sixth entry (technically 5th)... 
-![diagram](/assets/images/Pasted image 20250929185933.png)
+
+![diagram](/assets/images/Pasted image 20250929185933.png){: style="display:block; margin:auto;" }
+
 It points at `unk_3B78`. 
 Rule 2 from the specification said that for each direct non-virtual proper base class `B` of `D` that requires a VTT, in declaration order, a sub-VTT for `B-in-D`, structured like the main VTT for `B`, with a primary virtual pointer, secondary VTTs - stop right there! We've seen `C2`'s primary virtual pointer, but we aren't going to see any secondary VTT here, because `C2` has no direct non-virtual proper base class as stated in the _rules_. But we might have secondary virtual pointers here...We know according to rule 3 that we have a secondary virtual pointers  for each base class `X` which... 
 (a) has virtual bases or is reachable along a virtual path from `D`, and 
@@ -183,35 +198,49 @@ Rule 2 from the specification said that for each direct non-virtual proper base 
 ```
 ...`V3` and `V2`. `V3` won't get a secondary vptr, since it's our primary base.. Moving on to `V2`, it does have a virtual base, and it is not a non-virtual primary base for `C1`, so it gets a secondary vptr. If we follow `unk_3B78`, it brings us to the entry `V2-in-C2 in D`.
 ![diagram](/assets/images/Pasted image 20250929202909.png)
+
 This is where it brings us, right at `off_3B78`, below the typeinfo which we see in Construction table `C2-in-D` for the second time, and above it is a negative offset which is a `vcall offset` for virtual inheritance adjustments. 
-![diagram](/assets/images/Pasted image 20251001030124.png)
+![diagram](/assets/images/Pasted image 20251001030124.png){: style="display:block; margin:auto;" }
+
 But our secondary vptrs don't actually stop here, because `V2` inherits from `V1`. This brings us to the 7th (technically 6th) VTT entry, which makes us land at `off_3B90`.
 ![diagram](/assets/images/Pasted image 20250929203420.png)
+
 and it takes us to `V1-in-C2`. 
 ![diagram](/assets/images/Pasted image 20250929203623.png)
+
 We see `A2::f(void)`, well that's because `V1` inherits from `A2` and `A2` has a virtual function `f(void)`. `V1` gets a secondary vptr because firstly it's reachable along a virtual path, and secondly it's not a non-virtual primary base of `C2`. If we go up the inheritance hierarchy, we don't stop at `V1` alone, but go upto `A1` and `A2` classes too, since `V1` inherits from them.. not only this, but `V2` also inherits from `B1` and `B2`, but we're not going to have secondary vptrs for them..
 
  `A1` is direct base of `V1`. It doesn't have virtual bases, but it is reachable along a virtual path from `D`.  Also, it is not a non-virtual primary base. So it completes all the requirements for having a secondary vptr, but `A1` itself is non-polymorphic (no virtuals at all).  So `A1` does not even need a vptr and hence no entry in the VTT.  
 
  For`A2`, its  a base of `V1` and is polymorphic. It is also reachable along a virtual path. But! we know that _primary non-virtual bases don’t get secondary vptrs_.  And inside `V1`, `A2` is the primary base (polymorphic and also comes first in preorder), so no entry is going to be created for that. 
 As far as `B1` and `B2` are concerned, they are non virtual and non-polymorphic, so no entry! 
-![diagram](/assets/images/Pasted image 20251001031112.png)
+
+![diagram](/assets/images/Pasted image 20251001031112.png){: style="display:block; margin:auto;" }
+
 Our third base `D` inherits from is `C3`. And `C3` doesn't even get a Sub-VTT, because it has no direct or indirect virtual bases.
 
 ### More secondary vptrs
 Now since we are done with Sub-VTT's for our main VTT, next come the secondary virtual pointers. You might have noticed, We had followed the same layout for our Sub-VTT's, as we have been doing for the main VTT. This is what we meant by being recursive in point 2, with the exception of Virtual VTT's (Virtual virtual table table, good heavens), which we'll later see. 
 ![diagram](/assets/images/Pasted image 20250929210149.png)
+
 Now we are at the 8th entry (technically 7th), which takes us to... 
 ![diagram](/assets/images/Pasted image 20250929210336.png)
+
 We see that it's inside secondary vtable in `D`'s vtable. It's `V1-in-C2 in D`. Actually (`V1` is a not a non-virtual primary base and it is reachable along a virtual path).... One thing to remember, is that we can't have a secondary vptr to `C1-in-D`, because it's the primary base for `D`. 
-![diagram](/assets/images/Pasted image 20251001032017.png)
+![diagram](/assets/images/Pasted image 20251001032017.png){: style="display:block; margin:auto;" }
+
 Later comes entry at `off_3A48` which is our 9th (technically 8th) entry...
 ![diagram](/assets/images/Pasted image 20250929210635.png)
+
 which brings us here.....
+
 ![diagram](/assets/images/Pasted image 20250929210549.png)
+
 This is `C2-in-D`.. `C2` is not reachable via a virtual path, but it does have virtual bases, and it is not the non-virtual primary base for `D`, so it gets an entry. The `V3::g(void)` we see here, is the virtual function which was declared and defined in `V3`, which is inherited by `C2`.     
 Jumping on to our 10th (technically 9th) VTT entry which as we can see in the above screenshot, is again `off_3A48`. This is our `V3-in-D`. We see that the `V3-in-D` entry will be the same as the `C2-in-D` entry. Again, `V3` is reachable along a virtual path and is definitely not `D`'s primary non-virtual base.
-![diagram](/assets/images/Pasted image 20251001034949.png)
+
+![diagram](/assets/images/Pasted image 20251001034949.png){: style="display:block; margin:auto;" }
+
 Now onto our 11th (technically) VTT entry... which should theoretically be a secondary vptr to `V2-in-D`, but that's missing in the VTT compiler generated for my binary. The reason can possibly be a compiler optimization, as we'll soon see, where the Virtual VTT entry [11] serves the purpose that a `V2-in-D` secondary virtual pointer would have served. Now since we're done with our secondary vptrs, we'll move on to our fourth point, which as I just mentioned, is the virtual VTT.
 
 ### The unsung heroes: Virtual VTT 
@@ -223,15 +252,22 @@ The Virtual VTT's are required to be constructed just as we construced our Sub-V
 This means, a class needs a VTT when it has to deal with virtual base class construction, which requires multiple vtable addresses at different stages of construction, otherwise it's not needed. So only those of our virtual bases classes will need a virtual VTT, which themselves have virtual bases. 
 The virtual bases we have are `V1`, `V2` and `V3`. From these, only `V2` is a virtual base which itself is inheriting virtually from `V1`, hence it'll get a virtual VTT entry in the main VTT. Moving forward with our VTT in IDA:
 ![diagram](/assets/images/Pasted image 20250930002213.png)
+
 following the offset `unk_3BB0` brings us to....
+
 ![diagram](/assets/images/Pasted image 20250930002303.png)
+
 which indeed is our Virtual VTT. 
 Again applying the same rules here... For Virtual VTT of `V2-in-D`, we have our primary vptr (look into this)pointing to offset `0x3BB0`. Which checks our rule 1, that the first entry needs to hold the address of the primary virtual table... For rule 2, since we don't have any direct non-virtual proper base class `B` of `D` that requires a VTT, we won't create any. For rule 3, of having secondary vptrs, since `V1` is reachable along a virtual path, and is not the primary base for `V2`, because neither is it non-virtual, nor is it nearly empty because of its data member `i` which is an integer, so we are going to have a `V1-in-V2 in D` entry, and we aren't going to have a virtual VTT for it.. Lets take a look at the final entry of our main VTT in IDA for this:
+
 ![diagram](/assets/images/Pasted image 20250930003457.png)
+
 going over to `off_3BC8`:
+
 ![diagram](/assets/images/Pasted image 20250930003553.png)
+
 We reach inside our construction vtable for `V2-in-D`. Why can we see `A2:f(void)`, well that is because `A2` has a virtual function `f(void)`, which gets inherited by `V1`. 
-![diagram](/assets/images/Pasted image 20251001035732.png)
+![diagram](/assets/images/Pasted image 20251001035732.png){: style="display:block; margin:auto;" }
 
 #### Had the A's tried to be sneaky..
 Had either `A1` or `A2` been virtual bases, we would've had some more entries in our VTT. We then would've had another Virtual VTT for `V1-in-D`, more secondary vptrs etc. 
@@ -270,7 +306,9 @@ int main() {
 }
 ```
 Firstly our object `obj` resides at `0x7fffffffde50` on the stack. 
+
 ![diagram](/assets/images/Pasted image 20250930015559.png)
+
 From main we call our `D`'s constructor...
 
 ```asm 
@@ -297,9 +335,13 @@ mov     [rax], rdx
 ```
 
 Seeing our vtable in IDA
+
 ![diagram](/assets/images/Pasted image 20250930005218.png)
+
 This makes our object look like..
+
 ![diagram](/assets/images/Pasted image 20250930015800.png)
+
 Then on returning from `A::A()`:
 
 ```asm
@@ -312,11 +354,17 @@ call    B::B(void)
 ```
 
 We see that `rdi` has the address of our object `obj`  at `0x7fffffffde50`, and we set `rsi` as `0x555555557c50`.
+
 ![diagram](/assets/images/Pasted image 20250930005658.png)
+
 If we analyze the contents at `rsi`, we see that..
+
 ![diagram](/assets/images/Pasted image 20250930005918.png)
+
 The constructor for the complete class `D`, passes to its proper base class  `B` constructor a pointer to the appropriate place in the VTT where the proper base class B constructor can find its set of virtual tables. Here's where VTT has stepped in, lets take a look at how it looks like:
+
 ![diagram](/assets/images/Pasted image 20250930034238.png)
+
 -  The first entry at `0x3C48`, holds a pointer to the address of the primary virtual table for the complete object `D`.
 -  The second entry at `0x3C50`, holds our sub-VTT, `B-in-D`. `B` inherits virtually from `A`, so it requires a VTT of its own then, so at `0x3C50`, is our `B-in-D`'s construction table.
 - The third entry is basically our secondary vptr in the construction table `B-in-D`. As we'll see ahead, it'll be holding a reference to `A::foo(void)`. `A-in-B in D` gets to be our secondary vptr because firstly, it's reachable through a virtual path, and secondly, it's not a primary base for B. This is because it is virtual and it also not nearly empty because of the presence of `    int var_a`. 
@@ -338,7 +386,9 @@ mov     [rax], rdx
 ```
 
 We see that it stores the address where `[rbp+vtable_D]` points to at the address of our object stored in `rax`. This makes our object look like...
+
 ![diagram](/assets/images/Pasted image 20250930022644.png)
+
 where the address at `0x7fffffffde50` is the address of our construction table `B-in-D`. Moving on with our `B`'s constructor..
 
 ```asm
@@ -350,9 +400,13 @@ mov     rdx, rax
 ```
 
 We notice we're getting the address of our sub VTT `B-in-D`, going back 24 bytes, and storing whatever we get in `rdx`.
+
 ![diagram](/assets/images/Pasted image 20250930023954.png)
+
 We see that it has taken us to the very start of the construction table... 
+
 ![diagram](/assets/images/Pasted image 20250930024134.png)
+
 We pick the `20h` from here, and...
 
 ```asm
@@ -364,8 +418,11 @@ mov     [rdx], rax
 ```
 
 Add it to our this pointer, which takes us to `0x7fffffffde70` again..  And then we add to `off_3C50`, which was our pointer to construction table `B-in-D`, an offset of 8, which bring us to `0x3C58`..
+
 ![diagram](/assets/images/Pasted image 20250930024736.png)
+
 Which is where `A::foo(void)` is at... We've replaced the memory where `A`'s constructor had previously written its vtable's address, with the address of `A` in sub-VTT `B-in-D`, making our object now look like...
+
 ![diagram](/assets/images/Pasted image 20250930025003.png)
 
 Great! Now lets return back to `D`'s constructor.
@@ -380,11 +437,17 @@ call    C::C(void)
 ```
 
 now we've added `0x10` to our object's address, which brings us to `0x7fffffffde60`, and load the address at `off_3C60` in `rdx`, which probably now would be our pointer to construction table `C-in-D` inside our VTT for D, since next we're calling `C`'s constructor. 
+
 ![diagram](/assets/images/Pasted image 20250930025309.png)
+
 it's the 4th entry in our VTT, and it does take us to...
+
 ![diagram](/assets/images/Pasted image 20250930025349.png)
+
 Lets also confirm this stuff in GDB:
+
 ![diagram](/assets/images/Pasted image 20250930025615.png)
+
 This is the address of the first virtual function in `C`. Great, lets dig into `C()`'s disassembly.
 
 ```asm
@@ -407,9 +470,13 @@ mov     rdx, rax
 ```
 
 And now, we're simply getting the contents at where our this pointer points to right now, which is `0x7fffffffde60`, and subtracting 24 again (`0x18`)... The memory contents at `0x7fffffffde60` point to `off_3CD8`, which we earlier saw is an offset where our `C::bar(void)` is, and subtracting `0x18` from it brings us to `0x3CC0`, which is right the start of our construction table.
+
 ![diagram](/assets/images/Pasted image 20250930030438.png)
+
 So we're basically get the 16 from here, `0x10`, which is our offset to `A`'s part in our object from `C`.
+
 ![diagram](/assets/images/Pasted image 20250930030542.png)
+
 we just got a confirmation from GDB. Lets continue with the disassembly..
 
 ```asm
@@ -418,7 +485,9 @@ add     rdx, rax
 ```
 
 We add the offset to our this pointer... landing at.. 
+
 ![diagram](/assets/images/Pasted image 20250930030739.png)
+
 and then...
 
 ```asm
@@ -428,11 +497,17 @@ mov     [rdx], rax
 ```
 
 We're simply rewriting some address, at an offset of `+0x08` from our construction table `C-in-D`, at the area `A` entries have occupied till now..
+
 ![diagram](/assets/images/Pasted image 20250930031038.png)
+
 It brings us to `0x3C68`, which holds a pointer to...
+
 ![diagram](/assets/images/Pasted image 20250930031200.png)
+
 It's simply a thunk to `C::foo(void)`, which was initially `A::foo(void)`, overridden by `C`. So our object now looks like...
+
 ![diagram](/assets/images/Pasted image 20250930031457.png)
+
 Where we have two new entries, `0x0000555555557cd8` which is our `C::bar(void)`, inside our sub-VTT C-in-D, and `0x0000555555557d00`, which is the thunk to `C::foo(void)` we just saw. Lets return to `D`'s constructor now, where `D` things will come into action.
 
 ```asm
@@ -442,9 +517,13 @@ mov     [rax], rdx
 ```
 
 At `off_3BF0`, we have..
+
 ![diagram](/assets/images/Pasted image 20250930032055.png)
+
 and we're simply replacing our old entry `0x0000555555557c98`, which we've just seen in the GDB dump, which was actually the address of the construction table of `B-in-D` which further pointed to `B::baz(void)`, with the entry of `B::baz(void)` in our vtable for `D`. This also shows us, that `B` is the primary base class for `D`, since it shares the virtual table slot with it at offset 0. So now our object seems something like...
+
 ![diagram](/assets/images/Pasted image 20250930032249.png)
+
 with a new entry at the start of the object... moving further..
 
 ```asm
@@ -455,9 +534,13 @@ mov     [rax], rdx
 ```
 
 We now jump to `0x7fffffffde70` by adding `0x20` to our object's starting address, get some stuff at `off_3C40`, and dump it in our object.
+
 ![diagram](/assets/images/Pasted image 20250930032500.png)
+
 which is actually again our thunk to `C::foo(void)`, but this time in our vtable for `D`, unlike before where it was in `C-in-D` construction table. 
+
 ![diagram](/assets/images/Pasted image 20250930032649.png)
+
 and now we see a new address, address to our thunk in `D`'s vtable, at `0x7fffffffde70`. Continuing with our disassembly...
 
 ```asm
@@ -467,16 +550,24 @@ mov     [rax+10h], rdx
 ```
 
 lets go to `off_3C18`
+
 ![diagram](/assets/images/Pasted image 20250930032818.png)
+
 which is again, inside our `D`'s vtable, making our object giving a final look like:
+
 ![diagram](/assets/images/Pasted image 20250930032909.png)
+
 So now we've how virtual inheritance is taming classes... but before wrapping up, lets take a look at how each of the typeinfo for our classes would look like..
 
 ### typeinfo, not your average table...
 Firstly if we see our typeinfo for class `A`:
+
 ![diagram](/assets/images/Pasted image 20250930161323.png)
+
 We see the type is `__class_type_info`, and below that we have our `char *__name` which gets inherited by `__class_type_info` from `__type_info` as we've already seen in [Parents and Children in C++](https://mahamaryam.github.io/Parents-and-Children-in-C++/), and then we have the typeinfo name for `A`. Pretty straightforward... Lets see our typeinfo for `B`.
+
 ![diagram](/assets/images/Pasted image 20250930162037.png)
+
 Since our class `B` inherits virtually from class `A`, so we see the our typeinfo object type is `__vmi_class_type_info`, and its vptr points to the vtable of `__vmi_class_type_info`(as can be seen at `0x3D80`) (see [The Virtual Functions](https://mahamaryam.github.io/The-Virtual-Functions/)). The `+0x10` we see, skips the RTTI pointer in the vtable itself. This means, our object is going to further hold of course, the typeinfo name, as `__vmi_class_type_info` inherits from `__class_type_info` which further inherits the `*__name` from `__type_info` and passes it down to its children, as well as `unsigned in __flags` which carries the details about the class hierarchy, `unsigned int __base_count`, which tells us the number of direct bases, and `__base_class_type_info __base_info[1]` (add this to virtual functions) -- which actually uses a technique called _struct hack_, to create a variable length array at the end of the class. Despite being declared as an array of size `[1]`, this member actually is supposed to hold a variable number of base class entries, which is determined by the number of elements as in `__base_count` --. So after our vptr, comes typeinfo name for B, and then come our `__flags` which here are 0, and then the `__base_count` which is 1. 
 At offset `0x3D98`, starts our `__base_class_type_info` which was held in `__base_info[1]` which we know is a variable sized array and it holds base class entries. Since we just saw that our `__base_count` is 1, so we're going to hold only one entry inside `__base_info`, which is going to be for `A`. Lets take a look at how this structure looks like from C++ standard library.
 
