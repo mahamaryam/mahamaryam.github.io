@@ -472,6 +472,7 @@ And now, we're simply getting the contents at where our this pointer points to r
 So we're basically get the 16 from here, `0x10`, which is our offset to `A`'s part in our object from `C`.
 
 ![diagram](/assets/images/Pasted image 20250930030542.png)
+
 we just got a confirmation from GDB. Lets continue with the disassembly..
 
 ```cpp
