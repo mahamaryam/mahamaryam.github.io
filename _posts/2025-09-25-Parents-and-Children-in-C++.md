@@ -5,9 +5,9 @@ date: 2025-09-25
 classes: wide
 tags:
   - Reverse Engineering
-  - Sidechannels
   - Linux
-  - Writeup
+  - x86_64
+  - C++
 ---
 
 When reversing C++ binaries, identifying Inheritance is important. Derived Classes contain Base Class data at predictable offsets, creating recognizable memory patterns. By analyzing constructor calls, vtable pointers, and object layouts in a disassembler, we can reconstruct class hierarchies. This understanding is essential for interpreting Polymorphism and Virtual Functions in assembly. 
@@ -106,7 +106,7 @@ retn
 ```
 it stores the contents inside `esi`, which is actually the value `int_Base` is initialized to on this constructor call, to the location where this pointer points to on the stack, and then it returns. Our `obj_D` currently looks like this:
 
-![[Pasted image 20251001233050.png|#center|400]]
+![diagram](/assets/images/Pasted image 20251001233050.png){: style="display:block; margin:auto; width:300px;" }
 Recall that our `Base` class also had a member function `getVal()`, but it is not getting stored anywhere inside our object. This is because member functions live in the program’s code section, not in each object, so only data members are stored inside the object. Anyway lets return back to our `Derived` constructor now.
 ```asm ln=12
 mov     rax, [rbp+var_8]
@@ -117,7 +117,7 @@ Recall, that `rbp+var_8` stored our this pointer, and `var_C` stored our second 
 mov     [rax+4], edx
 ```
 We now store the value of `int_Derived` inside our object, since `rax` is referencing it, but at an offset of `+0x04`. Why so? Well... that's because our `Base` class also has an integer data member `int_Base`, which is stored in our object before any data member of `Derived` is. Integer takes 4 bytes, and since there are no padding issues yet, so we simply skip those 4 already colonized bytes, and land at address `rax+4`, and this is where we store the newly set value of `int_Derived`, that is 1.
-![[Pasted image 20251001233154.png|#center|400]]
+![diagram](/assets/images/Pasted image 20251001233154.png){: style="display:block; margin:auto; width:300px;" }
 
 ```asm ln=15
 nop
@@ -148,23 +148,23 @@ on returning, we simply take the value in `eax`, and store it in our local varia
 
 ### Dynamic Analysis using GDB
 Lets start!
-![[Pasted image 20250922022746.png]]
+![diagram](/assets/images/Pasted image 20250922022746.png){: style="width:400px;" }
 At this instruction, we're retrieving our object's address, which is our this pointer. It's address is `0x7fffffffde30`. 
-![[Pasted image 20250922022958.png]]
+![diagram](/assets/images/Pasted image 20250922022958.png){: style="width:400px;" }
 We then set our registers with the correct parameters, and call our `Derived` Constructor. Note that `rdi` holds our the address of our object. 
-![[Pasted image 20250922023318.png]]
+![diagram](/assets/images/Pasted image 20250922023318.png){: style="width:400px;" }
 in our `Derived` constructor, we save our arguments on the stack.
-![[Pasted image 20250922023436.png]]
+![diagram](/assets/images/Pasted image 20250922023436.png){: style="width:400px;" }
 next we set up our registers for a call to `Base(int)`.
-![[Pasted image 20250922023558.png]]
+![diagram](/assets/images/Pasted image 20250922023558.png){: style="width:400px;" }
 In `Base` constructor, we simply set our value of `int_Base` inside the object. lets analyze the memory contents after we are done with setting our value.
-![[Pasted image 20250922023815.png]]
+![diagram](/assets/images/Pasted image 20250922023815.png){: style="width:400px;" }
 We see, `0x2` is right at the start of our object. Once we return from `Base` constructor, now we can run our `Derived` constructor. Had there been any other class from which `Derived` inherited, we would've visited its constructor too as we'll soon see... but since there's not any, we'll let `Derived` continue with its execution, where it sets the value of its data member `int_Derived` at offset of `+0x04` from the address of our object `obj_D`. Lets see the memory layout after it's done:
-![[Pasted image 20250922024108.png]]
+![diagram](/assets/images/Pasted image 20250922024108.png){: style="width:400px;" }
 Eureka! Lets return to our main now...  
-![[Pasted image 20250922024320.png]]
+![diagram](/assets/images/Pasted image 20250922024320.png){: style="width:400px;" }
 We give a call to `Base::getVal()`, store the return value in `eax`, and save it in a local variable at `rbp-0x14`.
-![[Pasted image 20250922024551.png]]
+![diagram](/assets/images/Pasted image 20250922024551.png){: style="width:400px;" }
 ### When the compiler decides early
 In the above example, we had a simple case where we simply created a `Derived` class object on the stack... But what if we do something like...
 ```cpp
@@ -213,9 +213,9 @@ Derived* d = new Derived(4,5);
 Base* b = d;   
 ```
 We're taking a `Derived` object and casting it up the inheritance hierarchy to be treated as a `Base` object.
-![[Pasted image 20250923222959.png|#center|500]]
+![diagram](/assets/images/Pasted image 20250923222959.png){: style="display:block; margin:auto; width:300px;" }
 If we look at it from a memory perspective:
-![[Pasted image 20250923223550.png|#center|500]]
+![diagram](/assets/images/Pasted image 20250923223550.png){: style="display:block; margin:auto; width:300px;" }
 
 To make invocations to `Derived`'s member functions possible even after doing so, we use virtual functions which are out of the scope of this discussion.
 ### When one parent just isn’t enough
@@ -255,7 +255,7 @@ mov     rdi, rax        ; this
 call    Derived::Derived(int,int,int)
 ```
 side by side, we'll be seeing GDB too, so the parameters we have are:
-![[Pasted image 20250922041058.png]]
+![diagram](/assets/images/Pasted image 20250922041058.png){: style="width:400px;" }
 this shows that the address of our object is `0x7fffffffde3c`. In our `Derived` constructor, we first make a call to `Base1`'s constructor with appropriate parameters:
 ```asm
 mov     esi, edx        ; int
@@ -263,11 +263,11 @@ mov     rdi, rax        ; this
 call    Base1::Base1(int)
 ```
 in GDB:
-![[Pasted image 20250922041338.png]]
+![diagram](/assets/images/Pasted image 20250922041338.png){: style="width:400px;" }
 In `Base1`'s constructor, we simply store the value 3 at offset 0 inside our object, giving us the intermediate object state as..
-![[Pasted image 20250922041504.png]]
+![diagram](/assets/images/Pasted image 20250922041504.png){: style="width:400px;" }
 till now, our object looks something like this...
-![[Pasted image 20250923224331.png|#center|500]]
+![diagram](/assets/images/Pasted image 20250923224331.png){: style="display:block; margin:auto; width:300px;" }
 Once we return from `Base1` constructor, we call `Base2`'s constructor, but with a different this pointer value. 
 ```asm ln=4
 mov     rax, [rbp+var_8]
@@ -278,20 +278,20 @@ mov     rdi, rdx        ; this
 call    Base2::Base2(int)
 ```
 `rax` gets initialized with the address of the object, that is the this pointer, we add `0x04` to it and load its address in `rdx`, and this address gets passed as the address of the object. 
-![[Pasted image 20250922042007.png]]
+![diagram](/assets/images/Pasted image 20250922042007.png){: style="width:400px;" }
 the actual address of our object is `0x7fffffffde3c`, and after addition of `0x04` it becomes `0x7fffffffde40`. 
-![[Pasted image 20250923224759.png|#center|600]]
+![diagram](/assets/images/Pasted image 20250923224759.png){: style="display:block; margin:auto; width:300px;" }
 seeing this in GDB...
-![[Pasted image 20250922043750.png]]
+![diagram](/assets/images/Pasted image 20250922043750.png){: style="width:400px;" }
 Once we return from `Base2` constructor, we then store the value of `int_Derived` inside our object:
 ```asm ln=10
 mov     rax, [rbp+var_8]
 mov     edx, [rbp+var_C]
 mov     [rax+8], edx
 ```
-![[Pasted image 20250923225510.png|#center|600]]
+![diagram](/assets/images/Pasted image 20250923225510.png){: style="display:block; margin:auto; width:300px;" }
 All three data members `int_Base1`, `int_Base2` and `int_Derived` have been stored inside the object `obj_D` now... 
-![[Pasted image 20250922044154.png]]
+![diagram](/assets/images/Pasted image 20250922044154.png){: style="width:400px;" }
 Then we return to main, check the stack canary, encounter our function epilogue, and that is pretty much it.
 
 Happy Reversing!
