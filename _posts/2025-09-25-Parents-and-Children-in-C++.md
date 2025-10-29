@@ -45,7 +45,6 @@ int main()
 {
 	Derived obj_D(1,2);
 	int var = obj_D.getVal();
-
 	return 0;
 }
 ```
