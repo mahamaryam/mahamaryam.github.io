@@ -567,7 +567,7 @@ Anyway, lets move on to our offset part now. Which after sign extension and 8 bi
 We're done with the dissection of `B`'s typeinfo, and `C`'s typeinfo is going to be the same as `B`'s, since these are independent typeinfo objects. Lets see `D`'s typeinfo now..
 ![diagram](/assets/images/Pasted image 20250930191453.png)
 `B`'s typeinfo is of type `__vmi_class_type_info`, and the first entry at `0x3D20` is a vtable pointer to `__vmi_class_type_info` vtable which is of 8 bytes.
-Then at `0x3D28`, we have the typeinfo name for `D`. And then comes our `unsigned int __flags`, which is 4 bytes... We have seen in [[The Glorious Virtual Functions]],
+Then at `0x3D28`, we have the typeinfo name for `D`. And then comes our `unsigned int __flags`, which is 4 bytes... We have seen in [The Virtual Functions](https://mahamaryam.github.io/The-Virtual-Functions/),
 ```cpp
 enum __flags_masks
 {
