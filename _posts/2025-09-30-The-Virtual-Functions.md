@@ -18,7 +18,6 @@ Let's first take a look at a simple example, of a single class having virtual fu
 class Ex1
 {
 	int var1;
-
 public:
 		virtual void foo(); 
 		virtual void bar();
@@ -27,7 +26,7 @@ public:
 ```
 We have a simple class `Ex1`, having three virtual functions, `foo(void)`, `bar(void)` and a virtual destructor. When we mark a function as virtual, the compiler arranges things differently inside the object. Each object of `Ex1` now contains a hidden pointer called the **vptr** (Virtual Table Pointer) right at the start of the object. The size of vptr depends on the architecture, and since we're on a 64-bit architecture, vptr is 8 bytes (it will be 4 bytes in a 32 bit architecture). The vptr points to a table in memory known as the **vtable**. The vtable is simply an array of function addresses, one for each virtual function. So in our case, we assume that the vtable for `Ex1` will have three entries, one for `foo()` , second one for `bar()` and the third one for the destructor `~Ex1`. If we invoke  `foo()`, the program won’t directly call it like how we've seen till now. Instead, it looks up the `foo` entry in the vtable and calls the function address stored there. 
 
-![diagram](/assets/images/Pasted image 20251010165442.png){: style="display:block; margin:auto;" }
+![diagram](/assets/images/Pasted image 20251010165442.png){: style="display:block; margin:auto; width:50%" }
 
 However later we'll see, that there's a lot more to a vtable than entries of virtual functions alone. Here's our main function...
 ```cpp
@@ -59,7 +58,7 @@ call    operator new(ulong)
 We want to allocate 16 bytes for our object... We have 4 bytes for our `var1` data member, and our vptr is taking up 8 bytes. That makes a total of 12 bytes (4+8), but because of 16 byte alignment, we round it up to 16 bytes (0x10). After returning from operator new, our `rax` now holds the address of our newly allocated 16 bytes, which is our object.
 Lets see the address of our object in GDB:
 
-![diagram](/assets/images/Pasted image 20250922180033.png){: style="display:block; margin:auto; width:400px;" }
+![diagram](/assets/images/Pasted image 20250922180033.png){: style="display:block; margin:auto;" }
 
 Address of our object is `0x55555556aeb0`. Continuing to the disassembly...
 
@@ -196,7 +195,7 @@ retn
 ```
 
 We delete our object from memory. Recall, that we allocated 16 bytes (`0x10`) for this object, so we pass that as our size. This shows, why two destructor were needed, and added to the vtable.  Till now we've seen how our vtable actually looks like.
-![diagram](/assets/images/Pasted image 20251010165609.png){: style="display:block; margin:auto; width:400px;" }
+![diagram](/assets/images/Pasted image 20251010165609.png){: style="display:block; margin:auto; width:60%;" }
 
 Lets return back to `Ex1`'s constructor, after having loaded the effective address of `Ex1`'s vtable in `rdx`.
 
@@ -212,7 +211,6 @@ We simply store the address of our `Ex1` vtable at the start of our object.
 ![diagram](/assets/images/Pasted image 20250922205826.png)
 
 Now we return back to main... and this is pretty much it! 
-
 ### Single Parent with Virtual functions...
 Since we are nicely done with how our virtual functions look like in memory, we'll dive into how they actually come handy. For this, we'll deal with a case of single inheritance involving virtual functions. We'll be dealing with the following example:
 ```cpp
@@ -407,21 +405,21 @@ class Ex1
 	private:
 		int var1;
 	public:
-		virtual void foo()  {	}
-		virtual void qux()  {   }
+		virtual void foo() 
+		virtual void qux()  
 };
 class Ex2
 {
 	public:		
-		virtual void bar()  { }
+		virtual void bar()  
 };
 class Ex3: public Ex1, public Ex2
 {
 	private:
 		int var2;
 	public:
-		virtual void baz()  {  }	
-		virtual void foo()  {  }
+		virtual void baz()  	
+		virtual void foo()  
 };
 ```
 We create an object in main like...
@@ -467,7 +465,7 @@ lets take a look at how the object looks like in real...
 
 and...
 
-![diagram](/assets/images/Pasted image 20250923180417.png){: style="display:block; margin:auto; width:300px;" }
+![diagram](/assets/images/Pasted image 20250923180417.png){: style="display:block; margin:auto; width:60%;" }
 We're done with our call to primary case, so lets return back to our `Ex3`'s constructor. 
 
 ```cpp
@@ -491,7 +489,7 @@ Lets see what our `Ex2` vtable's address is which gets written at `0x55555556aec
 
 Our object now looks like this...
 
-![diagram](/assets/images/Pasted image 20250923181153.png){: style="display:block; margin:auto;" }
+![diagram](/assets/images/Pasted image 20250923181153.png)
 
 and now, lets take a peek into what `Ex2`'s vtable looks like...
 ![diagram](/assets/images/Pasted image 20250923011810.png)
@@ -524,7 +522,7 @@ Lets see this in GDB:
 
 We have overwritten our vptr with the address of `Ex3`'s vtable, while at offset of +16 our `Ex2`'s vtable still remains intact. 
 
-![diagram](/assets/images/Pasted image 20250923181615.png){: style="display:block; margin:auto;" }
+![diagram](/assets/images/Pasted image 20250923181615.png)
 
 Lets move forward with the disassembly:
 ```cpp
