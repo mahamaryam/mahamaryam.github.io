@@ -59,7 +59,7 @@ call    operator new(ulong)
 We want to allocate 16 bytes for our object... We have 4 bytes for our `var1` data member, and our vptr is taking up 8 bytes. That makes a total of 12 bytes (4+8), but because of 16 byte alignment, we round it up to 16 bytes (0x10). After returning from operator new, our `rax` now holds the address of our newly allocated 16 bytes, which is our object.
 Lets see the address of our object in GDB:
 
-![diagram](/assets/images/Pasted image 20250922180033.png)
+![diagram](/assets/images/Pasted image 20250922180033.png){: style="display:block; margin:auto; width:400px;" }
 
 Address of our object is `0x55555556aeb0`. Continuing to the disassembly...
 
@@ -196,7 +196,7 @@ retn
 ```
 
 We delete our object from memory. Recall, that we allocated 16 bytes (`0x10`) for this object, so we pass that as our size. This shows, why two destructor were needed, and added to the vtable.  Till now we've seen how our vtable actually looks like.
-![diagram](/assets/images/Pasted image 20251010165609.png)
+![diagram](/assets/images/Pasted image 20251010165609.png){: style="display:block; margin:auto; width:400px;" }
 
 Lets return back to `Ex1`'s constructor, after having loaded the effective address of `Ex1`'s vtable in `rdx`.
 
@@ -220,7 +220,6 @@ class Ex1
 {
     private:
         int var1;
-
     public:
         void foo()	{	}
         virtual void bar()	{	}
@@ -229,11 +228,9 @@ class Ex2: public Ex1
 {
     private:
         int var2;
-
     public:
         virtual void foo()	{	}
         void bar()	{	}
-        
 };
 ```
 We have two classes, both have a single virtual function. `Ex2` inherits from `Ex1`. In the main function, we create an object using new:
@@ -248,6 +245,7 @@ call    __Znwm
 ```
 
 We allocate a 16 byte object on the stack. The address our function is allocated at is `0x55555556aeb0`.
+
 ![diagram](/assets/images/Pasted image 20250923135807.png)
 
 and then..
@@ -312,10 +310,11 @@ retn
 ```
 
 Lets take a view at GDB too...
+
 ![diagram](/assets/images/Pasted image 20250924030453.png)
 
 So once we return from our `Ex1` constructor, this is what things are actually going to look like!
-![diagram](/assets/images/Pasted image 20250923175753.png)
+![diagram](/assets/images/Pasted image 20250923175753.png){: style="display:block; margin:auto;" }
 
 When we return back to `Ex2` constructor, we see that the `Ex2`'s vtable actually overwrites the vptr currently holding `Ex1` vtable's address in our object. See this disassembly:
 
@@ -353,11 +352,11 @@ In the typeinfo object we saw in IDA:
 -  At `0x3D90`, we have our vptr to `__si_class_type_info` vtable.
 -  Then at `0x3D98`, we have our `typeinfo name for Ex2` which is `3Ex2`.
 - And then at `0x3DA0`, comes our typeinfo for `Ex1`, which as defined in `__si_class_type_info`, is our `__base_type`.
-![diagram](/assets/images/Pasted image 20250924033458.png)
+![diagram](/assets/images/Pasted image 20250924033458.png){: style="display:block; margin:auto;" }
 
 ### Once Virtual, Always Virtual 
 But why does `Ex2`'s vtable hold addresses for 2 virtual functions, when we only declared `foo()` as virtual and `bar()` was non-virtual? That's because `Ex2::bar()` is an inherited virtual function. Even though we didn't write virtual in `Ex2`, but because `Ex1::bar()` was virtual, so `Ex2::bar()` must be virtual too. It **overrides** `Ex1::bar()` in the vtable. Note that we declared `foo()` as virtual in `Ex2`. This is a new virtual function  and doesn't override anything and simply gets added to the vtable. So we see, that _virtual-ness_ is inherited automatically. This way, you can believe `Ex2`'s `bar()` to be virtual too. So now our object looks something like this...
-![diagram](/assets/images/Pasted image 20250923175927.png)
+![diagram](/assets/images/Pasted image 20250923175927.png){: style="display:block; margin:auto;" }
 
 What if... we had another virtual function in `Ex1`, which isn't even declared in `Ex2`? Well, that would still be in `Ex2`'s virtual table, because `Ex1` is the primary base of `Ex2`, and then our virtual table will hold another entry for that function in the vtable. A primary base is such that it: 
 - Starts at **offset 0** inside the derived object, and
@@ -389,6 +388,7 @@ call    rdx
 ```
 
 Let me explain the assembly now... `rax` holds our this pointer.
+
 ![diagram](/assets/images/Pasted image 20250923000839.png)
 
 At line 19, we dereference the address stored in `rax`, and overwrite `rax` with whatever thing we got after dereferencing, which will be the address of `Ex2`'s vtable.
@@ -406,7 +406,6 @@ class Ex1
 {
 	private:
 		int var1;
-
 	public:
 		virtual void foo()  {	}
 		virtual void qux()  {   }
@@ -420,7 +419,6 @@ class Ex3: public Ex1, public Ex2
 {
 	private:
 		int var2;
-
 	public:
 		virtual void baz()  {  }	
 		virtual void foo()  {  }
@@ -466,8 +464,10 @@ We see two entries in the vtable, of the two virtual member functions `Ex1` clas
 
 lets take a look at how the object looks like in real...
 ![diagram](/assets/images/Pasted image 20250923011544.png)
+
 and...
-![diagram](/assets/images/Pasted image 20250923180417.png)
+
+![diagram](/assets/images/Pasted image 20250923180417.png){: style="display:block; margin:auto; width:300px;" }
 We're done with our call to primary case, so lets return back to our `Ex3`'s constructor. 
 
 ```cpp
@@ -490,7 +490,8 @@ Lets see what our `Ex2` vtable's address is which gets written at `0x55555556aec
 ![diagram](/assets/images/Pasted image 20250923011751.png)
 
 Our object now looks like this...
-![diagram](/assets/images/Pasted image 20250923181153.png)
+
+![diagram](/assets/images/Pasted image 20250923181153.png){: style="display:block; margin:auto;" }
 
 and now, lets take a peek into what `Ex2`'s vtable looks like...
 ![diagram](/assets/images/Pasted image 20250923011810.png)
@@ -507,6 +508,7 @@ mov     [rax], rdx
 ```
 
 We're overwriting `Ex1`'s vtable entry with the vtable of `Ex3`. But what does `Ex3`'s vtable look like?
+
 ![diagram](/assets/images/Pasted image 20250923011922.png)
 
 Oh wow... this is a pretty big vtable. Lets just focus on the first half for now till `0x3CF8` which we'll call our **primary vtable**... We see entries for three virtual functions. They are `Ex3::foo()`, `Ex3::baz()` and `Ex1::qux()`.
@@ -521,7 +523,8 @@ Lets see this in GDB:
 ![diagram](/assets/images/Pasted image 20250923015731.png)
 
 We have overwritten our vptr with the address of `Ex3`'s vtable, while at offset of +16 our `Ex2`'s vtable still remains intact. 
-![diagram](/assets/images/Pasted image 20250923181615.png)
+
+![diagram](/assets/images/Pasted image 20250923181615.png){: style="display:block; margin:auto;" }
 
 Lets move forward with the disassembly:
 ```cpp
@@ -530,6 +533,7 @@ mov     rax, [rbp+var_8]
 mov     [rax+10h], rdx
 ```
 Now we have gone ahead +16 bytes (0x10) from our this pointer, and overwritten that memory location with another address... double clicking on `off_3D20` reveals, that it is actually our `Ex3` vtable (Secondary vtable). 
+
 ![diagram](/assets/images/Pasted image 20250923020120.png)
 
 Lets see our object now:
@@ -554,7 +558,7 @@ __base_class_type_info __base_info[1]; // Array of bases.
 explicit __vmi_class_type_info(const char* __n, int ___flags): __class_type_info(__n), __flags(___flags), __base_count(0) { }
 ```
 It calls the parent class constructor with the name as an argument ` __class_type_info(__n)`,stores the flags parameter in the `__flags` member variable and initializes `__base_count` to 0. Recall that `__type_info` had a `const char *__name;`, which was inherited by `__class_type_info`. So we're simply passing it that. This is how our `__vmi_class_type_info` typeinfo structure looks like:
-![diagram](/assets/images/Pasted image 20250923181922.png)
+![diagram](/assets/images/Pasted image 20250923181922.png){: style="display:block; margin:auto; " }
 
 If we take a look at the typeinfo for `Ex3` in IDA again, so we get to know, that at:
 -  At offset`0x3D60` we have a pointer to `__vmi_class_type_info` vtable. 
@@ -571,6 +575,7 @@ __flags_unknown_mask = 0x10
    We just saw `__flags` as an argument to our `__vmi_class_type_info` constructor. The enum  `__flag_masks` is like a map that explains what each bit position means, while `__flags`  (4 bytes) is the actual data that holds the bit pattern for this class. Since we haven't done any complex inheritance, so this 32 bit field is all zeroes. 
 -  Then at offset `0x3D74` comes the **number of direct, proper base classes** we have, which is our `__base_count`, and since we have 2 base classes, so it's set as 2. 
 -  At offset `0x3D78`  we have our  `__base_info[0]` which is of type `__base_class_type_info`. Each base class will get an index inside `__base_info` array. From standard C++ library...
+
 ```cpp
 // Helper class for __vmi_class_type.
 class __base_class_type_info
@@ -592,6 +597,7 @@ __offset_shift = 8 // Bits to shift offset.
 };
 };
 ```
+
  First we're going to have a pointer to our base class. Since `Ex1` is inherited first, so we'll see a pointer to `typeinfo for Ex1` at `0x3D78`.  
 -  Then comes a '2' at offset `0x3D80`, which is  `__base_class_type_info::__offset_flags` (8 bytes), representing that we have inherited `Ex1` publicly (as we can see `__public_mask` is `0x2`). 
 -  Then we have our offset to top at which is a part of our `__offset_flags`, `0x3D81`, which here is 0 bytes as `Ex1` is the primary base class at start of object. 
@@ -599,14 +605,15 @@ __offset_shift = 8 // Bits to shift offset.
 -  At offset `0x3D90` we have our `__base_class_type_info::__offset_flags` which represents that we inherited `Ex2` publicly and then later at`0x3D91` we have an offset of `0x10`  as seen in the figure.  
 
 Lets return back to our main now.... Where we finish execution of our program with the function epilogue. 
+
 ### Pure virtual functions and crash landings...
 Till now, we’ve only seen how simple virtual functions work. Now let’s take a look at what pure virtual functions are.  Well, pure virtual functions let us define a kind of ‘blueprint’ for a class, something that says _every derived class must provide its own version of this function which is pure virtual_. Let’s see an example:
+
 ```cpp
 class Animal {
 public:
     virtual void speak() = 0; // pure virtual
 };
-
 class Dog : public Animal {
 public:
     void speak() override { write(1,"Woof\n", 5);  }
