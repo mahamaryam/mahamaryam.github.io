@@ -20,3 +20,4 @@ end
 
 # For JRuby
 gem "http_parser.rb", "~> 0.6.0", :platforms => [:jruby]
+
