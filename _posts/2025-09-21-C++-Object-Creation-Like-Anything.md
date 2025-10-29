@@ -52,7 +52,7 @@ mov     [rbp+stack_canary], rax
 xor     eax, eax
 ```
 
-From lines 1 to 2 we have the `function prologue`. At line 3 (`push rbx`) we are saving `rbx` on the stack because it's a `callee-saved register`, and the function must restore it before returning. At line 4 we are allocating some space on the stack which is `0x28` (40 bytes). Later from lines 5 to 6 we save our stack canary on the stack.  Moving further with the disassembly we have...
+From lines 1 to 2 we have the `function prologue`. At line 3 (`push rbx`) we are saving `rbx` on the stack because it's a `callee-saved register`, and the function must restore it before returning. At line 4 we are allocating some space on the stack which is `0x28` (40 bytes). Later from lines 5 to 6 we save our stack canary on the stack. Moving further with the disassembly we have...
 
 ```asm ln:8 
 lea     rax, [rbp+var_20]
@@ -125,12 +125,13 @@ From line 8 onward, we start storing our arguments inside our object. `rax` hold
 
 lets return back to our main function and continue analysis.
 
-```asm ln=13 ti
+```asm ln=13 
 mov     edi, 8          ; unsigned __int64
 call    operator new(ulong)
 ```
 
 The creation of the object `B1` is complete which was created on the stack. 
+
 ### Heap-born objects
 Lets now see, how our second object is created, `B2` which is created via new operator, on the heap. Operator new is the **C++ global allocation function**, equivalent to `malloc` in C. It's signatures are as 
 
@@ -154,6 +155,7 @@ As seen in line 15, we store our returned pointer in `rbx`. Now we set our argum
 The final layout is like...
 
 ![diagram4](/assets/images/Pasted image 20250923213400.png){: style="width:400px;" }
+
 We finally return to our main function...
 
 ```asm ln=20 
