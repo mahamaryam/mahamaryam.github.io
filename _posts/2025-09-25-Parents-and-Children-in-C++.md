@@ -131,7 +131,7 @@ mov     [rax+4], edx
 ```
 
 We now store the value of `int_Derived` inside our object, since `rax` is referencing it, but at an offset of `+0x04`. Why so? Well... that's because our `Base` class also has an integer data member `int_Base`, which is stored in our object before any data member of `Derived` is. Integer takes 4 bytes, and since there are no padding issues yet, so we simply skip those 4 already colonized bytes, and land at address `rax+4`, and this is where we store the newly set value of `int_Derived`, that is 1.
-![diagram](/assets/images/Pasted image 20251001233154.png){: style="display:block; margin:auto; width:70%;" }
+![diagram](/assets/images/Pasted image 20251001233154.png){: style="display:block; margin:auto; width:60%;" }
 
 ```cpp
 nop
