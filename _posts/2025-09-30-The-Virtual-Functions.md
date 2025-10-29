@@ -27,7 +27,7 @@ public:
 ```
 We have a simple class `Ex1`, having three virtual functions, `foo(void)`, `bar(void)` and a virtual destructor. When we mark a function as virtual, the compiler arranges things differently inside the object. Each object of `Ex1` now contains a hidden pointer called the **vptr** (Virtual Table Pointer) right at the start of the object. The size of vptr depends on the architecture, and since we're on a 64-bit architecture, vptr is 8 bytes (it will be 4 bytes in a 32 bit architecture). The vptr points to a table in memory known as the **vtable**. The vtable is simply an array of function addresses, one for each virtual function. So in our case, we assume that the vtable for `Ex1` will have three entries, one for `foo()` , second one for `bar()` and the third one for the destructor `~Ex1`. If we invoke  `foo()`, the program won’t directly call it like how we've seen till now. Instead, it looks up the `foo` entry in the vtable and calls the function address stored there. 
 
-![diagram](/assets/images/Pasted image 20251010165442.png)
+![diagram](/assets/images/Pasted image 20251010165442.png){: style="display:block; margin:auto;" }
 
 However later we'll see, that there's a lot more to a vtable than entries of virtual functions alone. Here's our main function...
 ```cpp
