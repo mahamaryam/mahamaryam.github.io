@@ -74,13 +74,14 @@ _ZN4BaseC2Eic
 #### What the heck is `_ZN4BaseC2Eic`?
 It does look scary but actually it's just a mangled name for Base::Base(int, char), and can be easily cracked.  Lets break it...
 
-| Mangled Part | Meaning                                                                                                                                                   |
-| ------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `_Z`         | All Itanium ABI names which are used by GCC on Linux start with `_Z`.                                                                                     |
-| `N ... E`    | `N` starts a nested name like a class. `E` marks the end of the nested scope.                                                                             |
-| `4Base`      | The number before a name tells its length. So `4Base` is actually the length of the name of the class that is Base (length 4) followed by the class name. |
-| `C2`         | Indicates a **complete object constructor**.                                                                                                              |
-| `Eic`        | Encodes the function parameters: `i` = `int`, `c` = `char`.                                                                                               |
+| Mangled Part | Meaning |
+| ------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `_Z` | All Itanium ABI names which are used by GCC on Linux start with `_Z`. |
+| `N ... E` | `N` starts a nested name like a class. `E` marks the end of the nested scope. |
+| `4Base` | The number before a name tells its length. So `4Base` is actually the length of the name of the class that is Base (length 4) followed by the class name. |
+| `C2` | Indicates a **complete object constructor**. |
+| `Eic` | Encodes the function parameters: `i` = `int`, `c` = `char`. |
+                                                                                            |
 However name mangling can be disabled in IDA by navigating to `Options`, then select `Demangled names`.
 ![diagram1](/assets/images/Pasted image 20250921185810.png){: style="display:block; margin:auto; width:300px;" }
 and then set the following settings
