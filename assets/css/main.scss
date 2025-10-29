@@ -1,17 +1,53 @@
-@import "minimal-mistakes/skins/dark"; // or whichever skin you currently use
+---
+# Only the main Sass file needs front matter
+---
+
+@charset "utf-8";
+
+// Import the theme’s default SCSS first
+@import "minimal-mistakes/skins/{{ site.minimal_mistakes_skin | default: 'default' }}";
 @import "minimal-mistakes";
-@import "custom/custom";
 
-/* Custom background & text colors */
-body {
-  background-color: #222222 !important;  /* dark / almost-black background */
-  color: #e0e0e0 !important;             /* light grey text for readability */
+// Now your custom overrides come after that ↓
+body,
+html {
+  background-color: #222222 !important;
+  color: #e0e0e0 !important;
 }
 
-a, a:visited {
-  color: #58a6ff !important;             /* link color – you can change this if you like */
+/* Header, navbar, masthead */
+.masthead,
+.masthead__inner-wrap,
+.site-nav,
+.greedy-nav {
+  background-color: #222222 !important;
+  background-image: none !important;
+  border: none !important;
 }
 
-a:hover {
-  color: #79c0ff !important;
+/* Remove blue overlays and gradients */
+.masthead::before,
+.masthead::after,
+.page__hero::before,
+.page__hero::after {
+  background: none !important;
+  content: none !important;
+}
+
+/* Content areas */
+.page__content,
+.page__inner-wrap {
+  background-color: #222222 !important;
+}
+
+/* Footer */
+.page__footer {
+  background-color: #222222 !important;
+  color: #cccccc !important;
+}
+
+/* Remove any filters or shadows */
+* {
+  box-shadow: none !important;
+  text-shadow: none !important;
 }
