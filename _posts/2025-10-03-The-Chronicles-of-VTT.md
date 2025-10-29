@@ -113,7 +113,7 @@ Till now in the VTT, we’ve set up the primary vptr that points to `D`'s vtable
 ### Down the Rabbit Hole of it all...
 Lets deep dive in it so that the reason of creating a VTT becomes clearer... During `D`'s construction, `D`'s constructor first constructs virtual base `V1` directly, and then constructs `C1` subobject. `C1`'s constructor gets a pointer to `C1-in-D` (`D_VTT`[1]) which points to the sub-VTT for `C1-in-D`. `C1`'s constructor uses `D_VTT`[1] to set its vptr and then uses `D_VTT`[2] which is `V1-in-C1 in D` secondary vptr. If we take a look at the disassembly of `C1`'s constructor:
 
-```asm 
+```cpp
 push    rbp
 mov     rbp, rsp    ;function prologue
 mov     [rbp+this], rdi
@@ -129,7 +129,7 @@ sub     rax, 18h             ;rdx = -24 offset from where we currently are
 
 So if we remember, we landed at `0x3B08` following our `C1-in-D` entry in the VTT. Our `rax` so far stores the address `0x3B08`, and when we go back 24 bytes, we reach at `0x3AF0`, where we have `28h`...
 
-```asm
+```cpp
 mov     rax, [rax]           ;rax = qword located at C-in-D - 0x18 = 28h
 mov     rdx, rax             ;rdx=rax so rdx=0x28
 mov     rax, [rbp+this]      ;rax=this
@@ -311,14 +311,14 @@ Firstly our object `obj` resides at `0x7fffffffde50` on the stack.
 
 From main we call our `D`'s constructor...
 
-```asm 
+```cpp 
 mov     rdi, rax        ; this
 call    D::D(void)
 ```
 
 and then from `D`, we invoke `A`'s constructor first of all with an addition of `0x20` to our object's starting address, rather than of `D`'s base class B and C, thanks to virtual inheritance.
 
-```asm 
+```cpp 
 mov     rax, [rbp+this]
 add     rax, 20h ; ' '
 mov     rdi, rax        ; this
@@ -327,7 +327,7 @@ call    A::A(void)
 
 and then inside `A`'s constructor, `obj` stores the address of our `A`'s vtable (grandparent class) where our this pointer is, at `0x7fffffffde70`.
 
-```asm
+```cpp
 mov     [rbp+this], rdi
 lea     rdx, off_3D18
 mov     rax, [rbp+this]
@@ -344,7 +344,7 @@ This makes our object look like..
 
 Then on returning from `A::A()`:
 
-```asm
+```cpp
 call    A::A(void)
 mov     rax, [rbp+var_8]
 lea     rdx, off_3C50
@@ -376,7 +376,7 @@ We don't notice `B` anywhere in our secondary vptr list, well that's because `B`
 
 Lets dig into the disassembly. We are sending the address of `B-in-D` construction table as our argument to `B`'s constructor. Below is the disassembly for `B`'s constructor.  
 
-```asm
+```cpp
 mov     [rbp+this], rdi
 mov     [rbp+vtable_D], rsi
 mov     rax, [rbp+vtable_D]
@@ -391,7 +391,7 @@ We see that it stores the address where `[rbp+vtable_D]` points to at the addres
 
 where the address at `0x7fffffffde50` is the address of our construction table `B-in-D`. Moving on with our `B`'s constructor..
 
-```asm
+```cpp
 mov     rax, [rbp+this]
 mov     rax, [rax]
 sub     rax, 18h
@@ -409,7 +409,7 @@ We see that it has taken us to the very start of the construction table...
 
 We pick the `20h` from here, and...
 
-```asm
+```cpp
 mov     rax, [rbp+this]
 add     rdx, rax
 mov     rax, [rbp+VTT_D]
@@ -427,7 +427,7 @@ Which is where `A::foo(void)` is at... We've replaced the memory where `A`'s con
 
 Great! Now lets return back to `D`'s constructor.
 
-```asm
+```cpp
 mov     rax, [rbp+var_8]
 add     rax, 10h
 lea     rdx, off_3C60
@@ -450,7 +450,7 @@ Lets also confirm this stuff in GDB:
 
 This is the address of the first virtual function in `C`. Great, lets dig into `C()`'s disassembly.
 
-```asm
+```cpp
 mov     [rbp+this], rdi
 mov     [rbp+VTT_D], rsi
 mov     rax, [rbp+VTT_D]
@@ -461,7 +461,7 @@ mov     [rax], rdx
 
 We're simply storing the address of our construction table `C-in-D` in our object. 
 
-```asm
+```cpp
 mov     rax, [rbp+this]
 mov     rax, [rax]
 sub     rax, 18h
@@ -478,7 +478,7 @@ So we're basically get the 16 from here, `0x10`, which is our offset to `A`'s pa
 
 we just got a confirmation from GDB. Lets continue with the disassembly..
 
-```asm
+```cpp
 mov     rax, [rbp+this]
 add     rdx, rax
 ```
@@ -488,7 +488,7 @@ We add the offset to our this pointer... landing at..
 
 and then...
 
-```asm
+```cpp
 mov     rax, [rbp+VTT_D]
 mov     rax, [rax+8]
 mov     [rdx], rax
@@ -508,7 +508,7 @@ It's simply a thunk to `C::foo(void)`, which was initially `A::foo(void)`, overr
 
 Where we have two new entries, `0x0000555555557cd8` which is our `C::bar(void)`, inside our sub-VTT C-in-D, and `0x0000555555557d00`, which is the thunk to `C::foo(void)` we just saw. Lets return to `D`'s constructor now, where `D` things will come into action.
 
-```asm
+```cpp
 lea     rdx, off_3BF0
 mov     rax, [rbp+var_8]
 mov     [rax], rdx
@@ -524,7 +524,7 @@ and we're simply replacing our old entry `0x0000555555557c98`, which we've just 
 
 with a new entry at the start of the object... moving further..
 
-```
+```cpp
 mov     rax, [rbp+this]
 add     rax, 20h ; ' '
 lea     rdx, off_3C40
@@ -541,7 +541,7 @@ which is actually again our thunk to `C::foo(void)`, but this time in our vtable
 
 and now we see a new address, address to our thunk in `D`'s vtable, at `0x7fffffffde70`. Continuing with our disassembly...
 
-```
+```cpp
 lea     rdx, off_3C18
 mov     rax, [rbp+this]
 mov     [rax+10h], rdx
