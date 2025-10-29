@@ -84,7 +84,7 @@ It does look scary but actually it's just a mangled name for Base::Base(int, cha
 However name mangling can be disabled in IDA by navigating to `Options`, then select `Demangled names`.
 ![diagram1](/assets/images/Pasted_image_20250921185810.png)
 and then set the following settings
-![[Pasted image 20250921185957.png|#center|300]]
+![diagram2](/assets/images/Pasted image 20250921185957.png)
 
 Finally, lets dig into the `Base` constructor... the call to our constructor is something like this;
 ```cpp
