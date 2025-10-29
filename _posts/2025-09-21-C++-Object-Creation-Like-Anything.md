@@ -83,9 +83,11 @@ It does look scary but actually it's just a mangled name for Base::Base(int, cha
 | `Eic` | Encodes the function parameters: `i` = `int`, `c` = `char`. |
                                                                                             
 However name mangling can be disabled in IDA by navigating to `Options`, then select `Demangled names`.
+
 ![diagram1](/assets/images/Pasted image 20250921185810.png){: style="display:block; margin:auto; width:300px;" }
 
 and then set the following settings
+
 ![diagram2](/assets/images/Pasted image 20250921185957.png){: style="display:block; margin:auto; width:300px;" }
 
 Finally, lets dig into the `Base` constructor... the call to our constructor is something like this;
@@ -121,6 +123,7 @@ retn
 ```
 
 From line 8 onward, we start storing our arguments inside our object. `rax` holds our `this` pointer. First `var_C` which holds 5 gets stored at the location `rax` is pointing to. Then at line 13 we see that we are storing our character currently stored in `dl` at an offset of `+0x04` from where `rax` is currently pointing at, giving us a final layout like:
+
 ![diagram3](/assets/images/Pasted image 20250923213325.png){: style="width:400px;" }
 
 lets return back to our main function and continue analysis.
@@ -187,27 +190,36 @@ retn
  Lets take a look at this in GDB to have a better idea of what's happening under the hood!
 
 Lets first take a look at the creation of `B1` object which is created on the stack. 
+
 ![diagram5](/assets/images/Pasted image 20250921203711.png){: style="width:400px;" }
 
 This address gets stored in `rdi` and all the arguments are set (reference the assembly snippets discussed previously side by side) and the constructor call is made. 
+
 ![diagram6](/assets/images/Pasted image 20250921204150.png){: style="width:400px;" }
 
 First we store our integer value which is our `a` data member at the location where we have our `this` pointer at, which is also stored in `rdi`. 
+
 ![diagram7](/assets/images/Pasted image 20250921204345.png){: style="width:400px;" }
 
 next we have to store our character that is 'a', in our `c` data member, having an ASCII of `0x61` in this case 4 bytes after where our this pointer is currently at. 
+
 ![diagram8](/assets/images/Pasted image 20250921204513.png){: style="display:block; margin:auto; width:300px;" }
+
 and this is what we get... our arguments are neatly stored inside our object. Lets return to main to see how things will be stored in our object `B2` on the heap!
 First as discussed earlier, we get 8 bytes allocated on the heap
+
 ![diagram9](/assets/images/Pasted image 20250921204704.png){: style="width:400px;" }
 
 The address of our object is `0x55555556aeb0`and now we call our `Base` constructor. 
+
 ![diagram10](/assets/images/Pasted image 20250921204817.png){: style="width:400px;" }
 
 `rdi` is pointing to the freshly allocated 8 byte area on the heap. First as seen earlier, we store our integer which in this case is 9, after which we get the following result:
+
 ![diagram11](/assets/images/Pasted image 20250921204921.png){: style="width:400px;" }
 
 and then we store our character... which in this case is 'x' having as ASCII of `0x78`.
+
 ![diagram12](/assets/images/Pasted image 20250921205002.png){: style="width:400px;" }
 
 Then we finally return to main after both of our objects have been created, and end our program! I guess that is it for today.
