@@ -484,6 +484,7 @@ add     rdx, rax
 ```
 
 We add the offset to our this pointer... landing at.. 
+
 ![diagram](/assets/images/Pasted image 20250930030739.png)
 
 and then...
@@ -655,6 +656,7 @@ bool is_public = __base_info[i].__is_public_p ();
 Anyway, lets move on to our offset part now. Which after sign extension and 8 bit right shift leaves us with `0xFFFFFFFFFFFFFFE8` which is actually -24. While seeing the construction of our object we had noticed a -24 offset from `B` to reach `A`. This is exactly what that is.
 We're done with the dissection of `B`'s typeinfo, and `C`'s typeinfo is going to be the same as `B`'s, since these are independent typeinfo objects. Lets see `D`'s typeinfo now..
 ![diagram](/assets/images/Pasted image 20250930191453.png)
+
 `B`'s typeinfo is of type `__vmi_class_type_info`, and the first entry at `0x3D20` is a vtable pointer to `__vmi_class_type_info` vtable which is of 8 bytes.
 Then at `0x3D28`, we have the typeinfo name for `D`. And then comes our `unsigned int __flags`, which is 4 bytes... We have seen in [The Virtual Functions](https://mahamaryam.github.io/The-Virtual-Functions/),
 ```cpp
