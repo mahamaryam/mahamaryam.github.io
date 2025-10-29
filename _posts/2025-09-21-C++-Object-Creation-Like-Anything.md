@@ -113,7 +113,7 @@ pop     rbp
 retn
 ```
 From line 8 onward, we start storing our arguments inside our object. `rax` holds our `this` pointer. First `var_C` which holds 5 gets stored at the location `rax` is pointing to. Then at line 13 we see that we are storing our character currently stored in `dl` at an offset of `+0x04` from where `rax` is currently pointing at, giving us a final layout like:
-![[Pasted image 20250923213325.png|center|500]]
+![diagram3](/assets/images/Pasted image 20250923213325.png)
 lets return back to our main function and continue analysis.
 ```asm ln=13 ti
 mov     edi, 8          ; unsigned __int64
@@ -137,7 +137,7 @@ call    Base::Base(int,char)
 ```
 As seen in line 15, we store our returned pointer in `rbx`. Now we set our arguments, as seen in the C++ code, we are constructing a new object `B2`, with arguments 9 and 'x'. For that we set `rdi` as our first argument (`this` pointer), our second argument `rsi` as 9 and `rdx`, our third argument as 'x'. Then we call our `Base` constructor again whose disassembly we just discussed. 
 The final layout is like...
-![[Pasted image 20250923213400.png|center|500]]
+![diagram4](/assets/images/Pasted image 20250923213400.png)
 We finally return to our main function...
 ```asm ln=20 
 mov     [rbp+var_28], rbx
@@ -163,22 +163,22 @@ retn
  Lets take a look at this in GDB to have a better idea of what's happening under the hood!
 
 Lets first take a look at the creation of `B1` object which is created on the stack. 
-![[Pasted image 20250921203711.png|#]]
+![diagram5](/assets/images/Pasted image 20250921203711.png)
 This address gets stored in `rdi` and all the arguments are set (reference the assembly snippets discussed previously side by side) and the constructor call is made. 
-![[Pasted image 20250921204150.png]]
+![diagram6](/assets/images/Pasted image 20250921204150.png)
 First we store our integer value which is our `a` data member at the location where we have our `this` pointer at, which is also stored in `rdi`. 
-![[Pasted image 20250921204345.png]]
+![diagram7](/assets/images/Pasted image 20250921204345.png)
 next we have to store our character that is 'a', in our `c` data member, having an ASCII of `0x61` in this case 4 bytes after where our this pointer is currently at. 
-![[Pasted image 20250921204513.png]]
+![diagram8](/assets/images/Pasted image 20250921204513.png)
 and this is what we get... our arguments are neatly stored inside our object. Lets return to main to see how things will be stored in our object `B2` on the heap!
 First as discussed earlier, we get 8 bytes allocated on the heap
-![[Pasted image 20250921204704.png]]
+![diagram9](/assets/images/Pasted image 20250921204704.png)
 The address of our object is `0x55555556aeb0`and now we call our `Base` constructor. 
-![[Pasted image 20250921204817.png]]
+![diagram10](/assets/images/Pasted image 20250921204817.png)
 `rdi` is pointing to the freshly allocated 8 byte area on the heap. First as seen earlier, we store our integer which in this case is 9, after which we get the following result:
-![[Pasted image 20250921204921.png]]
+![diagram11](/assets/images/Pasted image 20250921204921.png)
 and then we store our character... which in this case is 'x' having as ASCII of `0x78`.
-![[Pasted image 20250921205002.png]]
+![diagram12](/assets/images/Pasted image 20250921205002.png)
 Then we finally return to main after both of our objects have been created, and end our program! I guess that is it for today.
 
 Happy Reversing!
