@@ -204,3 +204,7 @@ defaults:
 include:
   - assets/css
   - _includes/head/custom.html
+
+markdown: kramdown
+kramdown:
+  input: GFM
