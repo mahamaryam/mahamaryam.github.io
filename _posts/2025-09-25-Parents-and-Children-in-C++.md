@@ -310,7 +310,7 @@ call    Base2::Base2(int)
 `rax` gets initialized with the address of the object, that is the this pointer, we add `0x04` to it and load its address in `rdx`, and this address gets passed as the address of the object. 
 ![diagram](/assets/images/Pasted image 20250922042007.png){: style="width:600px;" }
 the actual address of our object is `0x7fffffffde3c`, and after addition of `0x04` it becomes `0x7fffffffde40`. 
-![diagram](/assets/images/Pasted image 20250923224759.png){: style="display:block; margin:auto; width:600px;" }
+![diagram](/assets/images/Pasted image 20250923224759.png){: style="display:block; margin:auto; width:300px;" }
 seeing this in GDB...
 ![diagram](/assets/images/Pasted image 20250922043750.png){: style="width:400px;" }
 Once we return from `Base2` constructor, we then store the value of `int_Derived` inside our object:
