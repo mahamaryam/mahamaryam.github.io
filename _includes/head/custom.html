@@ -1,20 +1,30 @@
 <style>
-  /* Global background + text */
+  /* Global site background + text */
   body {
     background-color: #222222 !important;
     color: #e0e0e0 !important;
   }
 
-  /* Header and nav */
+  /* Header, nav, masthead */
   .masthead,
   .masthead__inner-wrap,
   .site-nav,
   .greedy-nav {
     background-color: #222222 !important;
+    background-image: none !important;
     border: none !important;
   }
 
-  /* Page content containers */
+  /* Kill translucent overlay on header */
+  .masthead::before,
+  .masthead::after,
+  .page__hero::before,
+  .page__hero::after {
+    background: none !important;
+    content: none !important;
+  }
+
+  /* Page content */
   .page__content,
   .page__inner-wrap {
     background-color: #222222 !important;
@@ -23,13 +33,27 @@
   /* Footer */
   .page__footer {
     background-color: #222222 !important;
-    color: #bbbbbb !important;
+    color: #cccccc !important;
   }
 
-  /* Optional: adjust link and title colors */
+  /* Sidebar, author box, etc. */
+  .sidebar,
+  .author__bio,
+  .author__content,
+  .author__urls-wrapper {
+    background-color: #222222 !important;
+  }
+
+  /* Links and titles */
   a,
   .site-title,
   .masthead a {
-    color: #cccccc !important;
+    color: #dddddd !important;
+  }
+
+  /* Optional: remove subtle blue shadows/filters */
+  * {
+    box-shadow: none !important;
+    text-shadow: none !important;
   }
 </style>
