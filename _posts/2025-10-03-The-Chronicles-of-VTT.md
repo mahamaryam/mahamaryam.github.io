@@ -579,14 +579,14 @@ __flags_unknown_mask = 0x10
 that `__diamond_shaped_mask` holds the second bit in our `__flags_mask`. Since `D` is a diamond shaped multiple inheritance, so we have 2 in our `__flags` field... To make use of our `__flags_masks`, we simply `&` it with our `__flags`.
 - Next at `0x3D34`, we have the count of base classes which is `__base_count`. 
 -  Now comes the first entry in our `__base_info[0]` which is `B` base class. We're going to follow this same class for it...
-	```cpp
+```cpp
 class __base_class_type_info
 {
 public:
 const __class_type_info* __base_type; // Base class type.
 long __offset_flags; // Offset and info, we're using this.
 };
-	```
+```
    Because we have an array of `__base_class_type_info` (`__base_class_type_info __base_info[1]`), so each index is going to hold an object of type `__base_class_type_info`. 
 - At `0x3D38`, we have our typeinfo for `B`, which is our `__base_type`.
 - At `0x3D40`, start our flags. Since we've simply inherited `B` publicly, so it's 2 (`__public_mask = 0x2` second bit set), and since `B` is our primary base for `D`, so the offset is 0.
