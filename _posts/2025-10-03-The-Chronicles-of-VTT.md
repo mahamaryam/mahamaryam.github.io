@@ -185,7 +185,7 @@ We see, that `V3` also comes before `V2` in the preorder, so now we can safely c
 
 Lets jump to our sixth entry (technically 5th)... 
 
-![diagram](/assets/images/Pasted image 20250929185933.png){: style="display:block; margin:auto;" }
+![diagram](/assets/images/Pasted image 20250929185933.png)
 
 It points at `unk_3B78`. 
 Rule 2 from the specification said that for each direct non-virtual proper base class `B` of `D` that requires a VTT, in declaration order, a sub-VTT for `B-in-D`, structured like the main VTT for `B`, with a primary virtual pointer, secondary VTTs - stop right there! We've seen `C2`'s primary virtual pointer, but we aren't going to see any secondary VTT here, because `C2` has no direct non-virtual proper base class as stated in the _rules_. But we might have secondary virtual pointers here...We know according to rule 3 that we have a secondary virtual pointers  for each base class `X` which... 
