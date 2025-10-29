@@ -1,13 +1,13 @@
 ---
 layout: single
-title:  "corCTF 2023: sysruption writeup"
-date: 2023-07-30
+title:  "The Virtual Functions"
+date: 2025-09-30
 classes: wide
 tags:
-  - Exploitation
+  - Reverse Engineering
   - Sidechannels
   - Linux
-  - CTF Writeup
+  - RE Writeup
 ---
 
 Since we're done with the basics, lets start reversing our magnificent virtual functions...
