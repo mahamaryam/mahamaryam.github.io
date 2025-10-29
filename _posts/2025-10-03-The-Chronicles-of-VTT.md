@@ -474,7 +474,6 @@ And now, we're simply getting the contents at where our this pointer points to r
 ![diagram](/assets/images/Pasted image 20250930030438.png)
 
 So we're basically get the 16 from here, `0x10`, which is our offset to `A`'s part in our object from `C`.
-
 ![diagram](/assets/images/Pasted image 20250930030542.png)
 
 we just got a confirmation from GDB. Lets continue with the disassembly..
@@ -485,7 +484,6 @@ add     rdx, rax
 ```
 
 We add the offset to our this pointer... landing at.. 
-
 ![diagram](/assets/images/Pasted image 20250930030739.png)
 
 and then...
@@ -526,7 +524,7 @@ and we're simply replacing our old entry `0x0000555555557c98`, which we've just 
 
 with a new entry at the start of the object... moving further..
 
-```asm
+```
 mov     rax, [rbp+this]
 add     rax, 20h ; ' '
 lea     rdx, off_3C40
@@ -543,7 +541,7 @@ which is actually again our thunk to `C::foo(void)`, but this time in our vtable
 
 and now we see a new address, address to our thunk in `D`'s vtable, at `0x7fffffffde70`. Continuing with our disassembly...
 
-```asm
+```
 lea     rdx, off_3C18
 mov     rax, [rbp+this]
 mov     [rax+10h], rdx
@@ -568,7 +566,7 @@ We see the type is `__class_type_info`, and below that we have our `char *__name
 
 ![diagram](/assets/images/Pasted image 20250930162037.png)
 
-Since our class `B` inherits virtually from class `A`, so we see the our typeinfo object type is `__vmi_class_type_info`, and its vptr points to the vtable of `__vmi_class_type_info`(as can be seen at `0x3D80`) (see [The Virtual Functions](https://mahamaryam.github.io/The-Virtual-Functions/)). The `+0x10` we see, skips the RTTI pointer in the vtable itself. This means, our object is going to further hold of course, the typeinfo name, as `__vmi_class_type_info` inherits from `__class_type_info` which further inherits the `*__name` from `__type_info` and passes it down to its children, as well as `unsigned in __flags` which carries the details about the class hierarchy, `unsigned int __base_count`, which tells us the number of direct bases, and `__base_class_type_info __base_info[1]` (add this to virtual functions) -- which actually uses a technique called _struct hack_, to create a variable length array at the end of the class. Despite being declared as an array of size `[1]`, this member actually is supposed to hold a variable number of base class entries, which is determined by the number of elements as in `__base_count` --. So after our vptr, comes typeinfo name for B, and then come our `__flags` which here are 0, and then the `__base_count` which is 1. 
+Since our class `B` inherits virtually from class `A`, so we see the our typeinfo object type is `__vmi_class_type_info`, and its vptr points to the vtable of `__vmi_class_type_info`(as can be seen at `0x3D80`) (see [The Virtual Functions](https://mahamaryam.github.io/The-Virtual-Functions/)). The `+0x10` we see, skips the RTTI pointer in the vtable itself. This means, our object is going to further hold of course, the typeinfo name, as `__vmi_class_type_info` inherits from `__class_type_info` which further inherits the `*__name` from `__type_info` and passes it down to its children, as well as `unsigned in __flags` which carries the details about the class hierarchy, `unsigned int __base_count`, which tells us the number of direct bases, and `__base_class_type_info __base_info[1]` (add this to virtual functions) which actually uses a technique called _struct hack_, to create a variable length array at the end of the class. Despite being declared as an array of size `[1]`, this member actually is supposed to hold a variable number of base class entries, which is determined by the number of elements as in `__base_count`. So after our vptr, comes typeinfo name for B, and then come our `__flags` which here are 0, and then the `__base_count` which is 1. 
 At offset `0x3D98`, starts our `__base_class_type_info` which was held in `__base_info[1]` which we know is a variable sized array and it holds base class entries. Since we just saw that our `__base_count` is 1, so we're going to hold only one entry inside `__base_info`, which is going to be for `A`. Lets take a look at how this structure looks like from C++ standard library.
 
 ```cpp
