@@ -58,7 +58,9 @@ call    operator new(ulong)
 
 We want to allocate 16 bytes for our object... We have 4 bytes for our `var1` data member, and our vptr is taking up 8 bytes. That makes a total of 12 bytes (4+8), but because of 16 byte alignment, we round it up to 16 bytes (0x10). After returning from operator new, our `rax` now holds the address of our newly allocated 16 bytes, which is our object.
 Lets see the address of our object in GDB:
+
 ![diagram](/assets/images/Pasted image 20250922180033.png)
+
 Address of our object is `0x55555556aeb0`. Continuing to the disassembly...
 
 ```asm ln=10
@@ -75,7 +77,9 @@ call    Ex1::Ex1(void)
 ```
 
 and then we call our constructor `Ex1`. Lets check this:
+
 ![diagram](/assets/images/Pasted image 20250922180206.png)
+
 and now...
 
 ```asm
