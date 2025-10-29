@@ -79,7 +79,7 @@ The specification says:
 
 and it brings us right inside our `C1-in-D` construction vtable, at an offset right below our typeinfo for `C1`. So till now, we have a VTT like...
 
-![diagram](/assets/images/Pasted image 20250930234436.png)
+![diagram](/assets/images/Pasted image 20250930234436.png){: style="display:block; margin:auto; " }
 
 Lets jump to the third entry (actually 2nd since we're dealing with 0 based indexing) at `0x3A98` (`off_3B20`) now which brings us inside our `C1-in-D` again...
 ![diagram](/assets/images/Pasted image 20250929141249.png)
