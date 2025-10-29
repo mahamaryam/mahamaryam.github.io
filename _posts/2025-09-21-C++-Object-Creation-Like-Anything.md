@@ -121,7 +121,7 @@ retn
 
 From line 8 onward, we start storing our arguments inside our object. `rax` holds our `this` pointer. First `var_C` which holds 5 gets stored at the location `rax` is pointing to. Then at line 13 we see that we are storing our character currently stored in `dl` at an offset of `+0x04` from where `rax` is currently pointing at, giving us a final layout like:
 
-![diagram3](/assets/images/Pasted image 20250923213325.png){: style="width:400px;" }
+![diagram3](/assets/images/Pasted image 20250923213325.png){: style="display:block; margin:auto; width:60%;" }
 
 lets return back to our main function and continue analysis.
 
@@ -154,7 +154,7 @@ call    Base::Base(int,char)
 As seen in line 15, we store our returned pointer in `rbx`. Now we set our arguments, as seen in the C++ code, we are constructing a new object `B2`, with arguments 9 and 'x'. For that we set `rdi` as our first argument (`this` pointer), our second argument `rsi` as 9 and `rdx`, our third argument as 'x'. Then we call our `Base` constructor again whose disassembly we just discussed. 
 The final layout is like...
 
-![diagram4](/assets/images/Pasted image 20250923213400.png){: style="width:400px;" }
+![diagram4](/assets/images/Pasted image 20250923213400.png){: style="display:block; margin:auto; width:60%;" }
 
 We finally return to our main function...
 
