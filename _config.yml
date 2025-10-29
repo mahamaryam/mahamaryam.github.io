@@ -10,7 +10,7 @@
 # Review documentation to determine if you should use `theme` or `remote_theme`
 # https://mmistakes.github.io/minimal-mistakes/docs/quick-start-guide/#installing-the-theme
 
-theme                  : "minimal-mistakes-jekyll"
+remote_theme: "mmistakes/minimal-mistakes"
 minimal_mistakes_skin    : "dark" # "air", "aqua", "contrast", "dark", "dirt", "neon", "mint", "plum", "sunrise"
 
 # Site Settings
@@ -20,9 +20,9 @@ title_separator          : "-"
 subtitle                 : # site tagline that appears below site title in masthead
 name                     : "zolutal"
 description              : "systems hacking"
-url                      : "https://zolutal.github.io" # the base hostname & protocol for your site e.g. "https://zolutal.github.io"
+url                      : "https://mahamaryam.github.io" # the base hostname & protocol for your site e.g. "https://zolutal.github.io"
 baseurl                  : # the subpath of your site, e.g. "/blog"
-repository               : zolutal/zolutal.github.io # GitHub username/repo-name e.g. "mmistakes/minimal-mistakes"
+repository               : mahamaryam/mahamaryam.github.io # GitHub username/repo-name e.g. "mmistakes/minimal-mistakes"
 teaser                   : # path of fallback teaser image, e.g. "/assets/images/500x300.png"
 logo                     : # path of logo image to display in the masthead, e.g. "/assets/images/88x88.png"
 breadcrumbs              : true # true, false (default)
