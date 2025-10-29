@@ -53,6 +53,7 @@ xor     eax, eax
 ```
 
 From lines 1 to 2 we have the `function prologue`. At line 3 (`push rbx`) we are saving `rbx` on the stack because it's a `callee-saved register`, and the function must restore it before returning. At line 4 we are allocating some space on the stack which is `0x28` (40 bytes). Later from lines 5 to 6 we save our stack canary on the stack.  Moving further with the disassembly we have...
+
 ```asm ln:8 
 lea     rax, [rbp+var_20]
 mov     edx, 61h ; 'a'  ; char
@@ -83,14 +84,18 @@ It does look scary but actually it's just a mangled name for Base::Base(int, cha
                                                                                             
 However name mangling can be disabled in IDA by navigating to `Options`, then select `Demangled names`.
 ![diagram1](/assets/images/Pasted image 20250921185810.png){: style="display:block; margin:auto; width:300px;" }
+
 and then set the following settings
 ![diagram2](/assets/images/Pasted image 20250921185957.png){: style="display:block; margin:auto; width:300px;" }
 
 Finally, lets dig into the `Base` constructor... the call to our constructor is something like this;
+
 ```cpp
  Base::Base(this_pointer, 5 ,'a')
 ```
+
 Taking a look at our constructor's disassembly...
+
 ```asm 
 endbr64                 ; Alternative name is 'Base::Base(int, char)'
 push    rbp
@@ -100,7 +105,9 @@ mov     [rbp+var_C], esi
 mov     eax, edx
 mov     [rbp+var_10], al
 ```
+
 We can see, that after our function prologue, at line 4, our `this` pointer is getting stored inside `[rbp+var_8]` which was passed in `rdi`. At line 5, `esi` which holds our second argument, 5, is stored at `[rbp+var_C]`, and `edx` which holds our third arguments is moved to `[rbp+var_10]` at line 6 and 7. 
+
 ```asm ln=8 
 mov     rax, [rbp+var_8]
 mov     edx, [rbp+var_C]
@@ -112,22 +119,29 @@ nop
 pop     rbp
 retn
 ```
+
 From line 8 onward, we start storing our arguments inside our object. `rax` holds our `this` pointer. First `var_C` which holds 5 gets stored at the location `rax` is pointing to. Then at line 13 we see that we are storing our character currently stored in `dl` at an offset of `+0x04` from where `rax` is currently pointing at, giving us a final layout like:
 ![diagram3](/assets/images/Pasted image 20250923213325.png){: style="width:400px;" }
+
 lets return back to our main function and continue analysis.
+
 ```asm ln=13 ti
 mov     edi, 8          ; unsigned __int64
 call    operator new(ulong)
 ```
+
 The creation of the object `B1` is complete which was created on the stack. 
 ### Heap-born objects
 Lets now see, how our second object is created, `B2` which is created via new operator, on the heap. Operator new is the **C++ global allocation function**, equivalent to `malloc` in C. It's signatures are as 
+
 ```cpp 
 `void* operator new(std::size_t n);`
 ```
+
  as defined in C++ standard library.
 
 The compiler passes the size in `rdi` register and calls `operator new` to get memory, as seen in the signature. The return value is a pointer to the allocated memory and that is stored in `rax` after the call.  Before calling operator new, we set `rdi` as 8, means now we have allocated 8 bytes on the heap and the starting address to that memory is stored in `rax`. 
+
 ```asm ln=15 
 mov     rbx, rax
 mov     edx, 78h ; 'x'  ; char
@@ -135,10 +149,13 @@ mov     esi, 9          ; int
 mov     rdi, rbx        ; this
 call    Base::Base(int,char)
 ```
+
 As seen in line 15, we store our returned pointer in `rbx`. Now we set our arguments, as seen in the C++ code, we are constructing a new object `B2`, with arguments 9 and 'x'. For that we set `rdi` as our first argument (`this` pointer), our second argument `rsi` as 9 and `rdx`, our third argument as 'x'. Then we call our `Base` constructor again whose disassembly we just discussed. 
 The final layout is like...
+
 ![diagram4](/assets/images/Pasted image 20250923213400.png){: style="width:400px;" }
 We finally return to our main function...
+
 ```asm ln=20 
 mov     [rbp+var_28], rbx
 mov     eax, 0
@@ -146,17 +163,22 @@ mov     rdx, [rbp+var_18]
 sub     rdx, fs:28h
 jz      short loc_11D7
 ```
+
 Here at line 20, we're saving the address of our newly created object on the heap whose address was stored in `rbx` at `[rbp+var_28]`... then from line 21 onward, we are checking whether there was some messing up with our stack canary or not and based on that we either give a call to....
+
 ``` asm ln=25 
 call    ___stack_chk_fail
 ```
+
  or in case of peaceful conditions...
+ 
  ```asm ln=25 
  loc_11D7:
 mov     rbx, [rbp+var_8]
 leave
 retn
  ```
+ 
  we first restore our `rbx`, and then hit our function epilogue :)
 
 ### Dynamic Analysis using GDB
@@ -164,21 +186,28 @@ retn
 
 Lets first take a look at the creation of `B1` object which is created on the stack. 
 ![diagram5](/assets/images/Pasted image 20250921203711.png){: style="width:400px;" }
+
 This address gets stored in `rdi` and all the arguments are set (reference the assembly snippets discussed previously side by side) and the constructor call is made. 
 ![diagram6](/assets/images/Pasted image 20250921204150.png){: style="width:400px;" }
+
 First we store our integer value which is our `a` data member at the location where we have our `this` pointer at, which is also stored in `rdi`. 
 ![diagram7](/assets/images/Pasted image 20250921204345.png){: style="width:400px;" }
+
 next we have to store our character that is 'a', in our `c` data member, having an ASCII of `0x61` in this case 4 bytes after where our this pointer is currently at. 
 ![diagram8](/assets/images/Pasted image 20250921204513.png){: style="display:block; margin:auto; width:300px;" }
 and this is what we get... our arguments are neatly stored inside our object. Lets return to main to see how things will be stored in our object `B2` on the heap!
 First as discussed earlier, we get 8 bytes allocated on the heap
 ![diagram9](/assets/images/Pasted image 20250921204704.png){: style="width:400px;" }
+
 The address of our object is `0x55555556aeb0`and now we call our `Base` constructor. 
 ![diagram10](/assets/images/Pasted image 20250921204817.png){: style="width:400px;" }
+
 `rdi` is pointing to the freshly allocated 8 byte area on the heap. First as seen earlier, we store our integer which in this case is 9, after which we get the following result:
 ![diagram11](/assets/images/Pasted image 20250921204921.png){: style="width:400px;" }
+
 and then we store our character... which in this case is 'x' having as ASCII of `0x78`.
 ![diagram12](/assets/images/Pasted image 20250921205002.png){: style="width:400px;" }
+
 Then we finally return to main after both of our objects have been created, and end our program! I guess that is it for today.
 
 Happy Reversing!
