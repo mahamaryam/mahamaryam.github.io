@@ -82,7 +82,7 @@ It does look scary but actually it's just a mangled name for Base::Base(int, cha
 | `C2`         | Indicates a **complete object constructor**.                                                                                                              |
 | `Eic`        | Encodes the function parameters: `i` = `int`, `c` = `char`.                                                                                               |
 However name mangling can be disabled in IDA by navigating to `Options`, then select `Demangled names`.
-![diagram1](./assets/images/Pasted_image_20250921185810.png)
+![diagram1](./../assets/images/Pasted_image_20250921185810.png)
 and then set the following settings
 ![[Pasted image 20250921185957.png|#center|300]]
 
