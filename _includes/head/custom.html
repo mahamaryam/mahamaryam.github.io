@@ -1,18 +1,35 @@
 <style>
-  /* Force background override */
+  /* Global background + text */
   body {
     background-color: #222222 !important;
     color: #e0e0e0 !important;
   }
 
-  /* Optional tweaks for header, footer, etc. */
-  .page__footer,
+  /* Header and nav */
   .masthead,
-  .site-nav {
+  .masthead__inner-wrap,
+  .site-nav,
+  .greedy-nav {
+    background-color: #222222 !important;
+    border: none !important;
+  }
+
+  /* Page content containers */
+  .page__content,
+  .page__inner-wrap {
     background-color: #222222 !important;
   }
 
-  a {
+  /* Footer */
+  .page__footer {
+    background-color: #222222 !important;
+    color: #bbbbbb !important;
+  }
+
+  /* Optional: adjust link and title colors */
+  a,
+  .site-title,
+  .masthead a {
     color: #cccccc !important;
   }
 </style>
