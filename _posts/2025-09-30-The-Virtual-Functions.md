@@ -489,7 +489,7 @@ Lets see what our `Ex2` vtable's address is which gets written at `0x55555556aec
 
 Our object now looks like this...
 
-![diagram](/assets/images/Pasted image 20250923181153.png){: style="display:block; margin:auto; width:60%;" }
+![diagram](/assets/images/Pasted image 20250923181153.png){: style="width:60%;" }
 
 and now, lets take a peek into what `Ex2`'s vtable looks like...
 ![diagram](/assets/images/Pasted image 20250923011810.png)
