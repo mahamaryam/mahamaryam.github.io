@@ -38,7 +38,7 @@ We'll take the following example from the Itanium ABI to explain the VTT:
   class D : public C1, public C2, public C3 { int i;  };
 ```
 which gives us an inheritance structure like...
-![diagram](/assets/images/Pasted image 20250930231334.png){: style="display:block; margin:auto; width:600px;" }
+![diagram](/assets/images/Pasted image 20250930231334.png){: style="display:block; margin:auto; width:800px;" }
 Lets take a look at the VTT created for this example by IDA.
 ![diagram](/assets/images/Pasted image 20250929134605.png)
 
@@ -104,7 +104,7 @@ Recall, that `V1` inherited from both `A1` and `A2`....
 ```
 ... and `A2` is the primary base of `V1` because `A2` is a polymorphic class (has virtual functions) and is inherited non-virtually at offset 0 in `V1`'s object layout. Since `V1` places `A2` at the beginning of its memory layout, `V1`'s vptr shares the same location as `A2`'s vptr, allowing them to use the same vtable, and this is why `A2::f()` appears as the first virtual function entry in `V1`'s vtable. `A2` occupies the primary base position at offset 0, making it `V1`'s primary base class.
 
-![diagram](/assets/images/Pasted image 20251001003617.png)
+![diagram](/assets/images/Pasted image 20251001003617.png){: style="display:block; margin:auto;" }
 
 Till now in the VTT, we’ve set up the primary vptr that points to `D`'s vtable at [0] and then **Sub VTT** or **construction table** for `C1-in-D`:
 - The first slot [1] points to the construction vtable for the `C1` part of `D`.
@@ -150,7 +150,7 @@ our fourth (technically third) entry at `0x3AA0` in the VTT (`off_3B58`) brings 
 ![diagram](/assets/images/Pasted image 20250929142050.png)
 
 We know why it's here.. Because we need to create a sub-VTT `B-in-D` for each direct non-virtual proper base class `B` of `D`. `D` inherits directly from `C1`, is a proper base, and has a virtual base `V1`, so we create `C2-in-D`. 
-![diagram](/assets/images/Pasted image 20251001022621.png)
+![diagram](/assets/images/Pasted image 20251001022621.png){: style="display:block; margin:auto;" }
 
 Now at our fifth entry (technically fourth), we have `off_3B58` which brings us to...
 ![diagram](/assets/images/Pasted image 20250929173955.png)
@@ -278,26 +278,22 @@ Now lets take a look at how we solve the diamond problem using virtual inheritan
 class A {
 public:
     int var_a;
-    
     virtual void foo() { }
 };
 class B : virtual public A {
 public:
     int var_b;
-    
     virtual void baz() { }
 };
 class C : virtual public A {
 public:
     int var_c;
-    
     virtual void bar() { }
     void foo() { }
 };
 class D : public B, public C {
 public:
     int var_d;
-    
     virtual void qux() { }
 };
 int main() {
@@ -474,8 +470,8 @@ And now, we're simply getting the contents at where our this pointer points to r
 ![diagram](/assets/images/Pasted image 20250930030438.png)
 
 So we're basically get the 16 from here, `0x10`, which is our offset to `A`'s part in our object from `C`.
-![diagram](/assets/images/Pasted image 20250930030542.png)
 
+![diagram](/assets/images/Pasted image 20250930030542.png)
 we just got a confirmation from GDB. Lets continue with the disassembly..
 
 ```cpp
