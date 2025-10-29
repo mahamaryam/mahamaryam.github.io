@@ -1,0 +1,16 @@
+@import "minimal-mistakes/skins/dark"; // or whichever skin you currently use
+@import "minimal-mistakes";
+
+/* Custom background & text colors */
+body {
+  background-color: #222222 !important;  /* dark / almost-black background */
+  color: #e0e0e0 !important;             /* light grey text for readability */
+}
+
+a, a:visited {
+  color: #58a6ff !important;             /* link color – you can change this if you like */
+}
+
+a:hover {
+  color: #79c0ff !important;
+}
